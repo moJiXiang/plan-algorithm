@@ -1,0 +1,210 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>{{title}}</title>
+</head>
+<link rel="stylesheet" href="/bootstrap/css/bootstrap.min.css">
+<link rel="stylesheet" href="/bootstrap/css/bootstrap-theme.min.css">
+<script src="/javascripts/jquery.js"></script>
+<script src="/javascripts/underscore-min.js"></script>
+<script src="/bootstrap/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="https://maps.googleapis.com/maps/api/js?v=3.exp"></script>
+<style type="text/css">
+  html { 
+  	height: 100% 
+  }
+  body { 
+  	position:relative; 
+  	height: 100%; 
+  	margin: 0; 
+  	padding: 0 
+  }
+  #spots {
+  	position: absolute; 
+  	right: 0;	 
+  	width: 25%;  
+  	height: 100%; 
+  	/*background: red;*/
+  }
+  .tab-content{
+    height: 470px;
+    overflow: auto;
+  }
+  #map_canvas { 
+  	with:80%; 
+  	height: 100% 
+  }
+</style>
+<script type="text/javascript">
+$(document).ready(function() {
+    var map, // 整个地图
+        poly1={}, poly2={}, poly3={}, poly4={}, poly5={}, poly6={}, poly7={}, poly8={}, // 线数组
+        hover_pointer, // hover临时显示的点 
+        markers = [], // 用来存储地图上的点,除了中心点外
+        centers = [],
+        places = []; // 存储点的信息
+
+    function initialize() {
+      var rec_lat = $('#recommand_center').data('lat'),
+          rec_lng = $('#recommand_center').data('lng'),
+          rec_name = $('#recommand_center').data('name');
+      var recommand_center = new google.maps.LatLng(rec_lat, rec_lng);
+      // 将中心点存储
+      centers.push({
+        latitude: rec_lat,
+        longitude: rec_lng,
+        name: rec_name
+      })
+      var center_image = '/images/beachflag.png';
+      var mapOptions = {
+        zoom: 13,
+        center: recommand_center,
+        mapTypeId: google.maps.MapTypeId.TERRAIN
+      };
+      map = new google.maps.Map(document.getElementById("map_canvas"),
+        mapOptions);
+      new google.maps.Marker({position: recommand_center, map: map, icon: center_image});
+
+      // 建立poly对象
+      var options1={}, options2={}, options3={}, options4={}, options5={}, options6={}, options7={}, options8={}
+      var strokeColorArray = ['#000000', '#3fbe7a', '#d09c5f', '#5c5662', '#f59172', '#f39700', '#60bde8', '#a3697e'];
+      var polyOptions = [options1, options2, options3, options4, options5, options6, options7, options8];
+      _.each(polyOptions, function(option, num) {
+          option.strokeColor = strokeColorArray[num];
+          option.strokeOpacity = 1.0;
+          option.strokeWeight = 3;
+      })
+      poly1 = new google.maps.Polyline(polyOptions[0]);
+      poly1.setMap(map);
+
+      poly2 = new google.maps.Polyline(polyOptions[1]);
+      poly2.setMap(map);
+
+      poly3 = new google.maps.Polyline(polyOptions[2]);
+      poly3.setMap(map);
+
+      poly4 = new google.maps.Polyline(polyOptions[3]);
+      poly4.setMap(map);
+
+      poly5 = new google.maps.Polyline(polyOptions[4]);
+      poly5.setMap(map);
+
+      poly6 = new google.maps.Polyline(polyOptions[5]);
+      poly6.setMap(map);
+
+      poly7 = new google.maps.Polyline(polyOptions[6]);
+      poly7.setMap(map);
+
+      poly8 = new google.maps.Polyline(polyOptions[7]);
+      poly8.setMap(map);
+    }
+    // hover显示添加点
+    $('.spot-btn').hover(function() {
+      var _this = $(this);
+      var lat = parseFloat(_this.data("lat")),
+          lng = parseFloat(_this.data("lng")),
+          type = _this.data('type'),
+          spot_icon;
+      switch(type){
+        case 1:
+          spot_icon = '/images/lifeinfo.png';
+          break;
+        case 3:
+          spot_icon = '/images/shopping.png';
+          break;
+      }
+      var spot = new google.maps.LatLng(lat, lng);
+      hover_pointer = new google.maps.Marker({position: spot, map: map, icon: spot_icon});
+    }, function() {
+      var _this = $(this);
+      var lat = parseFloat(_this.data("lat")),
+          lng = parseFloat(_this.data("lng"));
+      var spot = new google.maps.LatLng(lat, lng);
+      hover_pointer.setMap(null);
+    })
+    // 添加点
+    $('.spot-btn').click(function() {
+      var _this = $(this);
+      _this.addClass('active');
+      var lat = parseFloat(_this.data("lat")),
+          lng = parseFloat(_this.data("lng")),
+          duration = _this.data('duration'),
+          name = _this.html(),
+          type = _this.data('type'),
+          id = _this.data('id'),
+          title = _this.data('title') + duration,
+          spot_icon;
+      switch(type){
+        case 1:
+          spot_icon = '/images/lifeinfo.png';
+          break;
+        case 3:
+          spot_icon = '/images/shopping.png';
+          break;
+      }
+      var spot = new google.maps.LatLng(lat, lng);
+      markers.push(new google.maps.Marker({position: spot, map: map, icon: spot_icon, title: title}));
+      places.push({
+        latitude: lat,
+        longitude: lng,
+        duration: duration,
+        name: name,
+        type: type,
+        id : id
+      })
+      // 给markers添加点击事件, 在每次添加新点之后监听
+      _.each(markers, function(marker) {
+        google.maps.event.addListener(marker, 'click', function(){
+          var infowindow = new google.maps.InfoWindow({content: marker.getTitle()});
+          infowindow.open(map, marker);
+        })
+      })
+    })
+
+    // 将数据传到后台进行计算
+    $('#calculate-btn').click(function() {
+      var tripplan = {};
+      tripplan.centers = centers;
+      tripplan.places = places;
+      tripplan.intensity =  1;
+      $.ajax({
+        url: '/calculate',
+        method: 'POST',
+        data: {tripplan: JSON.stringify(tripplan)},
+        dataType: 'json'
+      }).done(function(results) {
+        console.log(results)
+        var polys = [poly1, poly2, poly3, poly4, poly5, poly6, poly7, poly8];
+        if(results[0].length) {
+          // 复杂情况返回结果可能会有多种情况
+          // 将点连成线
+          _.each(_.values(results), function(places, num) {
+            console.log(num)
+            var path = polys[num].getPath();
+            _.each(places, function(place) {
+              // 新建一个google LatLng对象, 才能将点塞到里面连成线
+              var coordinate = new google.maps.LatLng(place.latitude, place.longitude);
+              path.push(coordinate);
+            })
+          })
+        } else {
+          var path = polys[2].getPath();
+          _.each(results, function(place) {
+            // 新建一个google LatLng对象, 才能将点塞到里面连成线
+            var coordinate = new google.maps.LatLng(place.latitude, place.longitude);
+            path.push(coordinate);
+          })
+        }
+      })
+    })
+    // 初始化地图
+    google.maps.event.addDomListener(window, 'load', initialize);
+})
+</script>
+<body>
+
+    {{{body}}}
+
+</body>
+</html>

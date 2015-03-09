@@ -1,0 +1,32 @@
+<div id="spots">
+    <div class="tab">
+		<ul class="nav nav-tabs nav-justified">
+	      <li class="active"><a data-toggle="tab" href="#attractions">Attractions</a></li>
+	      <li><a data-toggle="tab" href="#restaurants">Restaurants</a></li>
+	      <li><a data-toggle="tab" href="#areas">Areas</a></li>
+	    </ul>
+	    <div class="tab-content">
+		    <div class="tab-pane active" id="attractions">
+		    	{{#each data.attractions}}
+					<button type="button" class="btn btn-default spot-btn btn-block" data-lat="{{this.latitude}}" data-lng="{{this.longitude}}" data-type="0" data-title = "{{this.attractions}}" data-duration="{{recommand_duration}}" data-id="{{this._id}}">{{this.attractions}}</button>
+		    	{{/each}}
+		    </div>
+		    <div class="tab-pane" id="restaurants">
+		    	{{#each data.restaurants}}
+					<button type="button" class="btn btn-default spot-btn btn-block" data-lat="{{this.latitude}}" data-lng="{{this.longitude}}" data-type="1" data-title="{{this.name}}" data-duration="{{recommand_duration}}" data-id="{{this._id}}">{{this.name}}</button>
+		    	{{/each}}
+		    </div>
+		    <div class="tab-pane" id="areas">
+		    	{{#each data.areas}}
+					<button type="button" class="btn btn-default spot-btn btn-block" data-lat="{{this.latitude}}" data-lng="{{this.longitude}}" data-type="3" data-title = "{{this.area_name}}" data-duration="{{recommand_duration}}" data-id="{{this._id}}">{{this.area_name}}</button>
+		    	{{/each}}
+		    </div>
+	    </div>
+	</div>
+	<div class="well">
+			<p id="recommand_center" data-lat="{{data.city.recommand_center.latitude}}" data-lng="{{data.city.recommand_center.longitude}}" data-name="{{data.city.recommand_center.name}}">{{data.city.recommand_center.name}}</p>
+        	<button class="btn btn-primary  btn-block" id="calculate-btn">计算</button>
+        </div>
+    
+</div>
+<div id="map_canvas" style="width:75%"></div>
